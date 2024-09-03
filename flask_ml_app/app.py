@@ -1,0 +1,85 @@
+from flask import Flask, render_template, request, jsonify
+import joblib
+import numpy as np
+import pandas as pd
+
+app = Flask(__name__)
+
+# Load the preprocessor and models
+preprocessor = joblib.load(r"C:\Users\oluyi\flask_ml_app\saved_models\preprocessor_v2.joblib")
+model_paths = {
+    "Decision Tree": r"C:\Users\oluyi\flask_ml_app\saved_models\decision_tree_model_v2.joblib",
+    "Gradient Boosting": r"C:\Users\oluyi\flask_ml_app\saved_models\gradient_boosting_model_v2.joblib",
+    "Random Forest": r"C:\Users\oluyi\flask_ml_app\saved_models\random_forest_model_v2.joblib",
+    "Stacking": r"C:\Users\oluyi\flask_ml_app\saved_models\stacking_model_v2.joblib",
+}
+
+models = {name: joblib.load(path) for name, path in model_paths.items()}
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        # Extract form data
+        input_data = {
+            'State': request.form['State'],
+            'Account length': int(request.form['Account length']),
+            'Area code': int(request.form['Area code']),
+            'International plan': request.form['International plan'],
+            'Voice mail plan': request.form['Voice mail plan'],
+            'Number vmail messages': float(request.form['Number vmail messages']),
+            'Total day minutes': float(request.form['Total day minutes']),
+            'Total day calls': float(request.form['Total day calls']),
+            'Total day charge': float(request.form['Total day charge']),
+            'Total eve minutes': float(request.form['Total eve minutes']),
+            'Total eve calls': float(request.form['Total eve calls']),
+            'Total eve charge': float(request.form['Total eve charge']),
+            'Total night minutes': float(request.form['Total night minutes']),
+            'Total night calls': float(request.form['Total night calls']),
+            'Total night charge': float(request.form['Total night charge']),
+            'Total intl minutes': float(request.form['Total intl minutes']),
+            'Total intl calls': float(request.form['Total intl calls']),
+            'Total intl charge': float(request.form['Total intl charge']),
+            'Customer service calls': int(request.form['Customer service calls']),
+        }
+
+        # Convert to DataFrame
+        input_df = pd.DataFrame([input_data])
+
+        # Get the selected model
+        model_name = request.form['model']
+
+        # Preprocess the data if not Stacking model
+        if model_name == 'Stacking':
+            X_transformed = input_df
+        else:
+            X_transformed = preprocessor.transform(input_df)
+
+        # Predict using the selected model
+        model = models[model_name]
+        prediction = model.predict(X_transformed)
+
+        # Convert prediction to label
+        prediction_label = 'CHURN' if prediction[0] == 1 else 'NOT CHURN'
+
+        # Load SHAP explanation text
+        shap_text_path = f"C:\\Users\\oluyi\\flask_ml_app\\saved_models\\shap_explanation_{model_name.lower().replace(' ', '_')}_model.txt"
+        with open(shap_text_path, 'r') as file:
+            shap_text = file.read()
+
+        # SHAP image paths
+        shap_feature_importance_path = f"/static/shap_summary_{model_name.lower().replace(' ', '_')}_model_v2.png"
+        shap_summary_plot_path = f"/static/shap_summary_{model_name.lower().replace(' ', '_')}_averaged.png"
+
+        # Return JSON response
+        return jsonify({
+            'model_name': model_name,
+            'prediction_label': prediction_label,
+            'shap_text': shap_text,
+            'shap_feature_importance_path': shap_feature_importance_path,
+            'shap_summary_plot_path': shap_summary_plot_path
+        })
+
+    return render_template('index.html')
+
+if __name__ == '__main__':
+    app.run(debug=True)

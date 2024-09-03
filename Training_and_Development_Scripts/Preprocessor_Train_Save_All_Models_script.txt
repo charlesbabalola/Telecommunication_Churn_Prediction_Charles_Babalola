@@ -1,0 +1,82 @@
+import pandas as pd  
+import numpy as np  
+import joblib  
+import os  
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, StackingClassifier  
+from sklearn.tree import DecisionTreeClassifier  
+from sklearn.compose import ColumnTransformer  
+from sklearn.preprocessing import StandardScaler, OneHotEncoder  
+from sklearn.pipeline import Pipeline  
+from sklearn.linear_model import LogisticRegression  
+
+# Create directory for saved models if it doesn't exist  
+os.makedirs('saved_models', exist_ok=True)  
+
+# Load Data  
+train_data = pd.read_csv(r"C:\Users\charles\Downloads\Bablola Charles Olugbenga\archive (22)\churn-bigml-80.csv")  
+test_data = pd.read_csv(r"C:\Users\charles\Downloads\Bablola Charles Olugbenga\archive (22)\churn-bigml-20.csv")  
+
+# Define target column  
+target_column = 'Churn'  
+X_train = train_data.drop(columns=[target_column])  
+y_train = train_data[target_column]  
+X_test = test_data.drop(columns=[target_column])  
+y_test = test_data[target_column]  
+
+# Identify categorical and numeric columns  
+numeric_features = X_train.select_dtypes(include=[np.number]).columns.tolist()  
+categorical_features = X_train.select_dtypes(include=['object']).columns.tolist()  
+
+# Create a preprocessing pipeline  
+preprocessor = ColumnTransformer(  
+    transformers=[  
+        ('num', StandardScaler(), numeric_features),  # Numeric features scaling  
+        ('cat', OneHotEncoder(handle_unknown='ignore', sparse_output=False), categorical_features)  # Categorical features encoding  
+    ],  
+    remainder='passthrough'  
+)  
+
+# Fit the preprocessor on the training data  
+X_train_transformed = preprocessor.fit_transform(X_train)  
+X_test_transformed = preprocessor.transform(X_test)  
+
+# Save the preprocessor  
+joblib.dump(preprocessor, 'saved_models/preprocessor_v2.joblib')  
+print("Preprocessor saved successfully!")  
+
+# Define models  
+model_rf = RandomForestClassifier(n_estimators=100, random_state=42)  
+model_gb = GradientBoostingClassifier(n_estimators=100, random_state=42)  
+model_dt = DecisionTreeClassifier(random_state=42)  # Adding Decision Tree model  
+
+# Train individual models  
+model_rf.fit(X_train_transformed, y_train)  
+model_gb.fit(X_train_transformed, y_train)  
+model_dt.fit(X_train_transformed, y_train)  
+
+# Save individual models  
+joblib.dump(model_rf, 'saved_models/random_forest_model_v2.joblib')  
+joblib.dump(model_gb, 'saved_models/gradient_boosting_model_v2.joblib')  
+joblib.dump(model_dt, 'saved_models/decision_tree_model_v2.joblib')  
+print("Individual models saved successfully!")  
+
+# Create a stacking model  
+stacking_model = StackingClassifier(  
+    estimators=[  
+        ('rf', model_rf),  
+        ('gb', model_gb),  
+        ('dt', model_dt)  # Include Decision Tree in the stacking  
+    ],  
+    final_estimator=LogisticRegression(random_state=42)  
+)  
+
+# Train the stacking model  
+stacking_pipeline = Pipeline(steps=[  
+    ('preprocessor', preprocessor),  
+    ('stacking', stacking_model)  
+])  
+stacking_pipeline.fit(X_train, y_train)  
+
+# Save the stacking model  
+joblib.dump(stacking_pipeline, 'saved_models/stacking_model_v2.joblib')  
+print("Stacking model saved successfully!")

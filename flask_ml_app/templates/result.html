@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Prediction Results</title>
+</head>
+<body>
+<h1>Prediction Results</h1>
+
+<p>Model: {{ model_name }}</p>
+<p>Prediction: {{ prediction_label }}</p>
+
+<h2>SHAP Explanation</h2>
+<pre>{{ shap_text }}</pre>
+
+<img src="{{ shap_image_path }}" alt="SHAP Feature Importance">
+</body>
+</html>

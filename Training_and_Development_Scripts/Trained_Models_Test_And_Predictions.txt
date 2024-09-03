@@ -1,0 +1,94 @@
+import pandas as pd
+import numpy as np
+import joblib
+import os
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the test data
+test_data = pd.read_csv(r"C:\Users\charles\Downloads\Bablola Charles Olugbenga\archive (22)\churn-bigml-20.csv")
+target_column = 'Churn'
+X_test = test_data.drop(columns=[target_column])
+y_test = test_data[target_column]
+
+# Define the paths to the models
+model_paths = {
+    "Decision Tree": r"C:\Users\charles\saved_models\decision_tree_model_v2.joblib",
+    "Gradient Boosting": r"C:\Users\Charles\saved_models\gradient_boosting_model_v2.joblib",
+    "Random Forest": r"C:\Users\charles\saved_models\random_forest_model_v2.joblib",
+    "Stacking": r"C:\Users\charles\saved_models\stacking_model_v2.joblib",
+}
+
+# Initialize a dictionary to store model results
+model_results = {}
+
+# Loop through the models
+for model_name, model_path in model_paths.items():
+    try:
+        # Load model
+        model = joblib.load(model_path)
+        
+        # If it's the Stacking model, no need to transform the data again
+        if model_name == "Stacking":
+            y_pred = model.predict(X_test)
+        else:
+            # Preprocess the data using the saved preprocessor
+            preprocessor = joblib.load(r'C:\Users\charles\saved_models\preprocessor_v2.joblib')
+            X_test_transformed = preprocessor.transform(X_test)
+            y_pred = model.predict(X_test_transformed)
+        
+        # Calculate accuracy, classification report, and confusion matrix
+        accuracy = accuracy_score(y_test, y_pred)
+        report = classification_report(y_test, y_pred, target_names=['False', 'True'])
+        cm = confusion_matrix(y_test, y_pred)
+        
+        # Store results
+        model_results[model_name] = {
+            "accuracy": accuracy,
+            "report": report,
+            "confusion_matrix": cm
+        }
+        
+        # Print the results
+        print(f"--- {model_name} ---")
+        print(f"Accuracy: {accuracy}")
+        print("Classification Report:")
+        print(report)
+        
+        # Plot the confusion matrix
+        plt.figure(figsize=(6, 4))
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False, 
+                    xticklabels=['False', 'True'], yticklabels=['False', 'True'])
+        plt.title(f'Confusion Matrix for {model_name}')
+        plt.xlabel('Predicted')
+        plt.ylabel('Actual')
+        plt.savefig(f'saved_models/{model_name}_confusion_matrix_v2.png')
+        plt.close()
+        
+    except Exception as e:
+        print(f"Error predicting with {model_name}: {str(e)}")
+
+# Determine the best model based on accuracy
+best_model_name = max(model_results, key=lambda k: model_results[k]["accuracy"])
+best_model_result = model_results[best_model_name]
+
+# Save the model predictions and comparison in a text file
+with open('saved_models/model_comparison_v2.txt', 'w') as f:
+    for model_name, result in model_results.items():
+        f.write(f"--- {model_name} ---\n")
+        f.write(f"Accuracy: {result['accuracy']}\n")
+        f.write("Classification Report:\n")
+        f.write(result['report'] + '\n')
+        f.write("Confusion Matrix:\n")
+        f.write(np.array2string(result['confusion_matrix']) + '\n\n')
+    
+    # Write the best model's information
+    f.write(f"*** Best Model: {best_model_name} ***\n")
+    f.write(f"Accuracy: {best_model_result['accuracy']}\n")
+    f.write("Classification Report:\n")
+    f.write(best_model_result['report'] + '\n')
+    f.write("Confusion Matrix:\n")
+    f.write(np.array2string(best_model_result['confusion_matrix']) + '\n')
+
+print("Model predictions and comparisons saved successfully!")
