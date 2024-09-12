@@ -1,0 +1,79 @@
+--- Decision Tree ---
+Accuracy: 0.9220389805097451
+Classification Report:
+              precision    recall  f1-score   support
+
+       False       0.96      0.95      0.95       572
+        True       0.72      0.75      0.73        95
+
+    accuracy                           0.92       667
+   macro avg       0.84      0.85      0.84       667
+weighted avg       0.92      0.92      0.92       667
+
+Confusion Matrix:
+[[544  28]
+ [ 24  71]]
+
+--- Gradient Boosting ---
+Accuracy: 0.9475262368815592
+Classification Report:
+              precision    recall  f1-score   support
+
+       False       0.95      0.99      0.97       572
+        True       0.91      0.71      0.79        95
+
+    accuracy                           0.95       667
+   macro avg       0.93      0.85      0.88       667
+weighted avg       0.95      0.95      0.94       667
+
+Confusion Matrix:
+[[565   7]
+ [ 28  67]]
+
+--- Random Forest ---
+Accuracy: 0.9445277361319341
+Classification Report:
+              precision    recall  f1-score   support
+
+       False       0.94      1.00      0.97       572
+        True       0.98      0.62      0.76        95
+
+    accuracy                           0.94       667
+   macro avg       0.96      0.81      0.86       667
+weighted avg       0.95      0.94      0.94       667
+
+Confusion Matrix:
+[[571   1]
+ [ 36  59]]
+
+--- Stacking ---
+Accuracy: 0.9535232383808095
+Classification Report:
+              precision    recall  f1-score   support
+
+       False       0.96      0.99      0.97       572
+        True       0.93      0.73      0.82        95
+
+    accuracy                           0.95       667
+   macro avg       0.94      0.86      0.89       667
+weighted avg       0.95      0.95      0.95       667
+
+Confusion Matrix:
+[[567   5]
+ [ 26  69]]
+
+*** Best Model: Stacking ***
+Accuracy: 0.9535232383808095
+Classification Report:
+              precision    recall  f1-score   support
+
+       False       0.96      0.99      0.97       572
+        True       0.93      0.73      0.82        95
+
+    accuracy                           0.95       667
+   macro avg       0.94      0.86      0.89       667
+weighted avg       0.95      0.95      0.95       667
+
+Confusion Matrix:
+[[567   5]
+ [ 26  69]]
